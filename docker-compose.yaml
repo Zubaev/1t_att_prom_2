@@ -1,0 +1,32 @@
+services:
+  db_postgres:
+    image: postgres:13.16-alpine3.20
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: zubaev
+    environment:
+      POSTGRES_USER: zms
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: test_db
+    ports:
+      - "5434:5432"
+    restart: unless-stopped
+    networks:
+      - service-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d test_db -U zms"]
+      interval: 5s
+      timeout: 10s
+      retries: 3 
+  python:
+    build: './'
+    networks:
+      - service-net
+    depends_on:
+      db_postgres:
+        condition: service_healthy
+networks:
+  service-net:
+    driver: bridge
+volumes:
+  db-data:
